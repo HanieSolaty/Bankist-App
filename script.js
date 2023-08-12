@@ -86,6 +86,9 @@ const movements = [200, 450, -400, 3000, -650, -130, 70, 1300]; */
 
 /////////////////////////////////////////////////
 //On refresh scroll back to top
+//values aren't sorted at the begining
+let sorted = false;
+
 window.onbeforeunload = function () {
   window.scrollTo(0, 0);
 };
@@ -120,8 +123,16 @@ function computeUsername(accounts) {
 computeUsername(accounts);
 
 function addMovement(movements) {
+  //moves are the sorted version of movement based on sorted var
+  let moves = sorted
+    ? movements.slice().sort((a, b) => (sorted === 'asc' ? a - b : b - a))
+    : movements;
+
+  console.log(movements, sorted);
+  console.log(moves);
+
   containerMovements.innerHTML = ``;
-  movements.forEach((move, i) => {
+  moves.forEach((move, i) => {
     const type = move > 0 ? `deposit` : `withdrawal`;
     const movementsRow = `
         <div class="movements__row">
@@ -279,8 +290,12 @@ function loan(e) {
 formLoan.addEventListener('submit', loan);
 
 //add EventListener for Sort btn
-let sorted = false;
+let sorting = [false, 'asc', 'des'];
 btnSort.addEventListener('click', function () {
-  const sorting = !sorted ? (sorted === 'asc' ? 'des' : 'asc') : false;
-  console.log(sorting);
+  sorted =
+    sorting.indexOf(sorted) < 2
+      ? sorting[sorting.indexOf(sorted) + 1]
+      : sorting[0];
+  console.log(sorted);
+  addMovement(currentAccount.movements);
 });
