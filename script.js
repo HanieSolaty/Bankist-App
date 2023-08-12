@@ -257,6 +257,8 @@ function close(e) {
     containerApp.style.opacity = 0;
     labelWelcome.textContent = 'Log in to get started';
     mainHeading.style.display = 'block';
+    //go back to top
+    window.scrollTo(0, 0);
   } else {
     unhideFunc('Invalid account credential!');
   }
@@ -283,7 +285,7 @@ function loan(e) {
   } else {
     unhideFunc('Your Loan Request was denied!');
   }
-  inputLoanAmount = '';
+  inputLoanAmount.value = '';
 }
 
 //add EventListener for Close form
