@@ -3,7 +3,7 @@
 This is a bank application.
 <br />
 <br />
-This App is avaiable at [this link](https://haniesolaty.github.io/Pig-Game/).
+This App is avaiable at [this link](https://bucolic-taffy-b95a6f.netlify.app/).
 
 In this app we 2 users with:
 <br />
