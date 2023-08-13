@@ -18,4 +18,5 @@ The users transactions will be display when they are logged in. They also can pe
 <br />
 This apps have features like format and display numbers and currency based on user location (in account). Also dates are displayed based on user local format.
 <br />
+<br />
 Each user will be logged out if they remain inactive for 3 min.
