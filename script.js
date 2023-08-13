@@ -101,6 +101,7 @@ const btnTransfer = document.querySelector('.form__btn--transfer');
 const btnLoan = document.querySelector('.form__btn--loan');
 const btnClose = document.querySelector('.form__btn--close');
 const btnSort = document.querySelector('.btn--sort');
+const btnLogout = document.querySelector('.logout');
 
 const inputLoginUsername = document.querySelector('.login__input--user');
 const inputLoginPin = document.querySelector('.login__input--pin');
@@ -297,7 +298,24 @@ function calcSummary({ movements, interestRate }) {
   labelSumInterest.textContent = displayMoney(currentAccount, sumInterset);
 }
 
-let currentAccount;
+let currentAccount, timer, loanTimer;
+
+function startLogOutInactiveUser() {
+  //This function is to log out user, if they are inactive for 5 min
+  let timeRemaining = 180;
+  function tick() {
+    const min = String(Math.floor(timeRemaining / 60)).padStart(2, 0);
+    const sec = String(Math.floor(timeRemaining % 60)).padStart(2, 0);
+    labelTimer.textContent = `${min}:${sec}`;
+    if (timeRemaining === 0) {
+      logOut();
+      unhideFunc('Logged out beacuse you were inactive for 3 mintues!');
+    }
+    timeRemaining--;
+  }
+  tick();
+  timer = setInterval(tick, 1000);
+}
 
 function updateUI() {
   //calc and display current balance
@@ -308,12 +326,38 @@ function updateUI() {
   calcSummary(currentAccount);
 }
 
+//Log out function excute if user has been inactive for some time or logout btn clicked
+function logOut() {
+  if (loanTimer) clearTimeout(loanTimer);
+  if (timer) clearInterval(timer);
+  //seting UI back to Login form(Basically Log out)
+  labelWelcome.textContent = 'Log in to get started';
+  mainHeading.style.display = 'block';
+  containerApp.style.opacity = 0;
+  //reseting login form and removing logout btn
+  btnLogout.style.display = 'none';
+  formLogin.style.display = 'block';
+  //go back to top
+  window.scrollTo(0, 0);
+}
+
+//add Event listner to log out btn
+btnLogout.addEventListener('click', logOut);
+
 function login(e) {
   e.preventDefault();
   currentAccount = accounts.find(
     account => inputLoginUsername.value.trim() === account.username
   );
   if (currentAccount?.pin === Number(inputLoginPin.value) && currentAccount) {
+    //start Timer to log out user after 5 min(if inactive)
+    if (loanTimer) clearTimeout(loanTimer);
+    if (timer) clearInterval(timer);
+    startLogOutInactiveUser();
+
+    //hide login form and show log out btn
+    btnLogout.style.display = 'block';
+    formLogin.style.display = 'none';
     //hide Welcom back text
     mainHeading.style.display = 'none';
     //welcom with username
@@ -365,6 +409,11 @@ function transfer(e) {
   } else {
     unhideFunc('Invalid Transfer!');
   }
+
+  //transfer is an activity so we reset the timer for log out inactive users
+  clearInterval(timer);
+  startLogOutInactiveUser();
+  //Reseting UI
   inputTransferAmount.blur();
   inputTransferTo.blur();
   inputTransferAmount.value = inputTransferTo.value = '';
@@ -386,12 +435,7 @@ function close(e) {
     //since here we have currentAccount we could have used accounts.indexOf(currentAccount) but the findIndex method can handle any condition unlike indexOf which only check equivalent value to the one we sent in
     accounts.splice(index, 1);
     unhideFunc(`Successfuly removed the account!`);
-    //seting UI back to Login form
-    containerApp.style.opacity = 0;
-    labelWelcome.textContent = 'Log in to get started';
-    mainHeading.style.display = 'block';
-    //go back to top
-    window.scrollTo(0, 0);
+    logOut();
   } else {
     unhideFunc('Invalid account credential!');
   }
@@ -410,7 +454,7 @@ function loan(e) {
   //only if you have at least 1 deposit which is deposit >= 10% of loan requested money then you get the loan
   unhideFunc(`Your Loan Request is submitted and is being reviewed!`);
   const amount = Number(inputLoanAmount.value);
-  setTimeout(() => {
+  loanTimer = setTimeout(() => {
     if (
       amount > 0 &&
       currentAccount.movements.some(move => move >= amount * 0.1)
@@ -422,7 +466,11 @@ function loan(e) {
     } else {
       unhideFunc('Your Loan Request was denied!');
     }
-  }, 5000);
+  }, 10000);
+  //transfer is an activity so we reset the timer for log out inactive users
+  clearInterval(timer);
+  startLogOutInactiveUser();
+  //Reseting UI
   inputLoanAmount.blur();
   inputLoanAmount.value = '';
 }

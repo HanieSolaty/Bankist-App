@@ -43,6 +43,24 @@ nav {
   display: flex;
 }
 
+.logout {
+  display: none;
+  padding: 0.7rem 2.2rem;
+  font-size: 1.7rem;
+  font-family: inherit;
+  text-align: center;
+  width: 12rem;
+  border-radius: 10rem;
+  margin-right: 1rem;
+  color: inherit;
+  border: 1px solid #cccccc;
+  transition: all 0.3s;
+}
+
+.logout:hover {
+  font-size: 2rem;
+}
+
 .login__input {
   border: none;
   padding: 0.5rem 2rem;
