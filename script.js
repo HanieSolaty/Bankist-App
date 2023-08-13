@@ -467,7 +467,7 @@ function loan(e) {
       unhideFunc('Your Loan Request was denied!');
     }
   }, 10000);
-  //transfer is an activity so we reset the timer for log out inactive users
+  //loan request is an activity so we reset the timer for log out inactive users
   clearInterval(timer);
   startLogOutInactiveUser();
   //Reseting UI
@@ -485,5 +485,9 @@ btnSort.addEventListener('click', function () {
     sorting.indexOf(sorted) < 2
       ? sorting[sorting.indexOf(sorted) + 1]
       : sorting[0];
+  //sorting is an activity so we reset the timer for log out inactive users
+  clearInterval(timer);
+  startLogOutInactiveUser();
+  //display sorted
   addMovementsToUI(currentAccount);
 });
