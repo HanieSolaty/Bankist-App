@@ -39,9 +39,9 @@ const account2 = {
     '2019-12-25T06:04:23.907Z',
     '2020-01-25T14:18:46.235Z',
     '2020-02-05T16:33:06.386Z',
-    '2020-04-10T14:43:26.374Z',
-    '2020-06-25T18:49:59.371Z',
-    '2020-07-26T12:01:20.894Z',
+    '2023-08-06T14:43:26.374Z',
+    '2023-08-12T18:49:59.371Z',
+    '2023-08-13T12:01:20.894Z',
   ],
   currency: 'USD',
   locale: 'en-US',
@@ -151,6 +151,71 @@ const unhideFunc = function (str) {
 btnCloseModal.addEventListener('click', hideFunc);
 overlay.addEventListener('click', hideFunc);
 
+//Dispaly Date Function
+function displayDate(recDate = new Date(), time = false, locale = 'en-US') {
+  //TODO we have the Locales for Intl API to have  national formated date but I prefer same formatiing always
+  //using Intl API approach
+  const optionsDateTime = {
+    minute: '2-digit',
+    hour: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  };
+  const optionsDate = {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  };
+  recDate = new Date(recDate);
+  const formatedDate = time
+    ? Intl.DateTimeFormat(locale, optionsDateTime).format(recDate)
+    : Intl.DateTimeFormat(locale, optionsDate).format(recDate);
+  return formatedDate;
+
+  //my own formating date functionality
+  /* let objDate = {
+    year: recDate.getFullYear(),
+    month: recDate.getMonth() + 1,
+    day: recDate.getDate(),
+    hour: recDate.getHours(),
+    min: recDate.getMinutes(),
+  };
+  Object.entries(objDate).forEach(([key, val]) => {
+    objDate[key] = key !== 'year' ? String(val).padStart(2, 0) : val;
+  });
+  const strDate = `${objDate.day}/${objDate.month}/${objDate.year}`;
+  return !time ? strDate : strDate + `, ${objDate.hour}:${objDate.min}`; */
+}
+
+//display recent date in terms like today, yesterday , 3 day ago and etc
+function displayRecentDate(recDate = new Date()) {
+  recDate = new Date(recDate);
+
+  //Recreating date with only year and month and date so they don't include hour and min and sec because it's very complicated to find number of passed day if they were in date(), Example: if a transaction was done at 11pm and we check our account again at 1am to tomarrow then only 2h hass passed and daysPassed var would show that but techincaly the transaction would have been done yesterday, but we would have to say Today!!! and with only year/month/day even if the transaction was done yesterday (2h ago) we will stil get yesterday since we have no idea at what hour or min or sec
+  let todayDate = new Date();
+  todayDate = new Date(
+    todayDate.getFullYear(),
+    todayDate.getMonth(),
+    todayDate.getDate()
+  );
+
+  recDate = new Date(
+    recDate.getFullYear(),
+    recDate.getMonth(),
+    recDate.getDate()
+  );
+  //return value will be time difference between these dates but in mili seconds so we convert it to days
+  const daysPassed = (todayDate - recDate) / (1000 * 60 * 60 * 24);
+  //if not in recent week the displayDate function should be used so this function will return false
+  if (daysPassed >= 8) return false;
+  return daysPassed === 0
+    ? 'Today'
+    : daysPassed === 1
+    ? 'Yesterday'
+    : `${daysPassed}  days ago`;
+}
+
 //Bankist functions
 function computeUsername(accounts) {
   accounts.forEach(
@@ -165,25 +230,27 @@ function computeUsername(accounts) {
 
 computeUsername(accounts);
 
-function addMovement(movements) {
+function addMovementsToUI({ movements, movementsDates, locale }) {
   //moves are the sorted version of movement based on sorted var
+  const moveAndDate = movements.map((mov, i) => [mov, movementsDates[i]]);
   let moves = sorted
-    ? movements.slice().sort((a, b) => (sorted === 'asc' ? a - b : b - a))
-    : movements;
-
-  console.log(movements, sorted);
-  console.log(moves);
+    ? moveAndDate
+        .slice()
+        .sort((a, b) => (sorted === 'asc' ? a[0] - b[0] : b[0] - a[0]))
+    : moveAndDate;
 
   containerMovements.innerHTML = ``;
   moves.forEach((move, i) => {
-    const type = move > 0 ? `deposit` : `withdrawal`;
+    const type = move[0] > 0 ? `deposit` : `withdrawal`;
     const movementsRow = `
         <div class="movements__row">
           <div class="movements__type movements__type--${type}">${
       i + 1
     } ${type}</div>
-          <div class="movements__date">3 days ago</div>
-          <div class="movements__value">${Math.abs(move).toFixed(1)}€</div>
+          <div class="movements__date">${
+            displayRecentDate(move[1]) || displayDate(move[1], false, locale)
+          }</div>
+          <div class="movements__value">${Math.abs(move[0]).toFixed(1)}€</div>
         </div>`;
     containerMovements.insertAdjacentHTML(`afterbegin`, movementsRow);
   });
@@ -196,7 +263,7 @@ function calcBalance(curAcc) {
   curAcc.balance = balance;
 }
 
-function calcSummary(movements, interestRate) {
+function calcSummary({ movements, interestRate }) {
   const sumIn = movements
     .filter(move => move > 0)
     .reduce((sum, move) => sum + move, 0);
@@ -220,9 +287,9 @@ function updateUI() {
   //calc and display current balance
   calcBalance(currentAccount);
   //calc and display account movements
-  addMovement(currentAccount.movements);
+  addMovementsToUI(currentAccount);
   //calc and display current summary
-  calcSummary(currentAccount.movements, currentAccount.interestRate);
+  calcSummary(currentAccount);
 }
 
 function login(e) {
@@ -238,6 +305,8 @@ function login(e) {
     labelWelcome.textContent = `Welcome back, ${
       currentAccount.owner.split(' ')[0]
     }`;
+    //showing current Date when you log in, (undefined, true) 1th arg will be set to current date and time in func and second is to show both date and time not date only(default)
+    labelDate.textContent = displayDate(undefined, true, currentAccount.locale);
     //ake off focus from it
     inputLoginPin.blur();
     inputLoginUsername.blur();
@@ -257,6 +326,11 @@ formLogin.addEventListener('submit', login);
 
 //Operations functions
 //Transfer
+function pushNewMove(account, amount) {
+  account.movements.push(amount);
+  account.movementsDates.push(new Date().toISOString());
+}
+
 function transfer(e) {
   e.preventDefault();
   const receiverAccount = accounts.find(
@@ -269,8 +343,8 @@ function transfer(e) {
     receiverAccount?.username !== currentAccount.username &&
     currentAccount.balance >= amount
   ) {
-    currentAccount.movements.push(-amount);
-    receiverAccount.movements.push(amount);
+    pushNewMove(currentAccount, -amount);
+    pushNewMove(receiverAccount, amount);
     console.log('Valdi');
     updateUI();
     unhideFunc('Transfer Complete!');
@@ -321,7 +395,7 @@ function loan(e) {
     amount > 0 &&
     currentAccount.movements.some(move => move >= amount * 0.1)
   ) {
-    currentAccount.movements.push(Math.floor(amount));
+    pushNewMove(currentAccount, Math.floor(amount));
     unhideFunc(`Your Loan Request was accepted!`);
     //update ui to show loan in deposits
     updateUI();
@@ -341,6 +415,5 @@ btnSort.addEventListener('click', function () {
     sorting.indexOf(sorted) < 2
       ? sorting[sorting.indexOf(sorted) + 1]
       : sorting[0];
-  console.log(sorted);
-  addMovement(currentAccount.movements);
+  addMovementsToUI(currentAccount);
 });
