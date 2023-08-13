@@ -154,7 +154,9 @@ overlay.addEventListener('click', hideFunc);
 //Dispaly Date Function
 function displayDate(recDate = new Date(), time = false, locale = 'en-US') {
   //TODO we have the Locales for Intl API to have  national formated date but I prefer same formatiing always
-  //using Intl API approach
+  //using Intl API approach with help locale attr of account
+  //TODO for more locale/ISO code you can see ISO language table
+  //TODO navigator.language will return the local system ISO code
   const optionsDateTime = {
     minute: '2-digit',
     hour: '2-digit',
