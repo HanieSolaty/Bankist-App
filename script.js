@@ -151,6 +151,17 @@ const unhideFunc = function (str) {
 btnCloseModal.addEventListener('click', hideFunc);
 overlay.addEventListener('click', hideFunc);
 
+//display formated Money based on local User
+function displayMoney({ currency, locale }, value) {
+  const options = {
+    style: 'currency',
+    currency: currency,
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+  };
+  return new Intl.NumberFormat(locale, options).format(Math.abs(value));
+}
+
 //Dispaly Date Function
 function displayDate(recDate = new Date(), time = false, locale = 'en-US') {
   //TODO we have the Locales for Intl API to have  national formated date but I prefer same formatiing always
@@ -171,8 +182,8 @@ function displayDate(recDate = new Date(), time = false, locale = 'en-US') {
   };
   recDate = new Date(recDate);
   const formatedDate = time
-    ? Intl.DateTimeFormat(locale, optionsDateTime).format(recDate)
-    : Intl.DateTimeFormat(locale, optionsDate).format(recDate);
+    ? new Intl.DateTimeFormat(locale, optionsDateTime).format(recDate)
+    : new Intl.DateTimeFormat(locale, optionsDate).format(recDate);
   return formatedDate;
 
   //my own formating date functionality
@@ -252,7 +263,10 @@ function addMovementsToUI({ movements, movementsDates, locale }) {
           <div class="movements__date">${
             displayRecentDate(move[1]) || displayDate(move[1], false, locale)
           }</div>
-          <div class="movements__value">${Math.abs(move[0]).toFixed(1)}€</div>
+          <div class="movements__value">${displayMoney(
+            currentAccount,
+            move[0]
+          )}</div>
         </div>`;
     containerMovements.insertAdjacentHTML(`afterbegin`, movementsRow);
   });
@@ -261,7 +275,7 @@ function addMovementsToUI({ movements, movementsDates, locale }) {
 function calcBalance(curAcc) {
   const movements = curAcc.movements;
   const balance = movements.reduce((acc, move) => acc + move, 0);
-  labelBalance.textContent = `${balance.toFixed(1)}€`;
+  labelBalance.textContent = displayMoney(currentAccount, balance);
   curAcc.balance = balance;
 }
 
@@ -269,18 +283,18 @@ function calcSummary({ movements, interestRate }) {
   const sumIn = movements
     .filter(move => move > 0)
     .reduce((sum, move) => sum + move, 0);
-  labelSumIn.textContent = `${sumIn.toFixed(1)}€`;
+  labelSumIn.textContent = displayMoney(currentAccount, sumIn);
 
   const sumOut = movements
     .filter(move => move < 0)
     .reduce((sum, move) => sum + move, 0);
-  labelSumOut.textContent = `${Math.abs(sumOut).toFixed(1)}€`;
+  labelSumOut.textContent = displayMoney(currentAccount, sumOut);
 
   const sumInterset = movements
     .filter(move => move > 0)
     .map(move => (move * interestRate) / 100)
     .reduce((sum, move) => sum + move, 0);
-  labelSumInterest.textContent = `${sumInterset.toFixed(1)}€`;
+  labelSumInterest.textContent = displayMoney(currentAccount, sumInterset);
 }
 
 let currentAccount;
@@ -297,8 +311,7 @@ function updateUI() {
 function login(e) {
   e.preventDefault();
   currentAccount = accounts.find(
-    account =>
-      inputLoginUsername.value.toLowerCase().trim() === account.username
+    account => inputLoginUsername.value.trim() === account.username
   );
   if (currentAccount?.pin === Number(inputLoginPin.value) && currentAccount) {
     //hide Welcom back text
@@ -347,12 +360,13 @@ function transfer(e) {
   ) {
     pushNewMove(currentAccount, -amount);
     pushNewMove(receiverAccount, amount);
-    console.log('Valdi');
     updateUI();
     unhideFunc('Transfer Complete!');
   } else {
     unhideFunc('Invalid Transfer!');
   }
+  inputTransferAmount.blur();
+  inputTransferTo.blur();
   inputTransferAmount.value = inputTransferTo.value = '';
 }
 
@@ -381,6 +395,8 @@ function close(e) {
   } else {
     unhideFunc('Invalid account credential!');
   }
+  inputClosePin.blur();
+  inputCloseUsername.blur();
   inputClosePin.value = inputCloseUsername.value = '';
 }
 
@@ -392,18 +408,22 @@ function loan(e) {
   e.preventDefault();
   console.log('here');
   //only if you have at least 1 deposit which is deposit >= 10% of loan requested money then you get the loan
+  unhideFunc(`Your Loan Request is submitted and is being reviewed!`);
   const amount = Number(inputLoanAmount.value);
-  if (
-    amount > 0 &&
-    currentAccount.movements.some(move => move >= amount * 0.1)
-  ) {
-    pushNewMove(currentAccount, Math.floor(amount));
-    unhideFunc(`Your Loan Request was accepted!`);
-    //update ui to show loan in deposits
-    updateUI();
-  } else {
-    unhideFunc('Your Loan Request was denied!');
-  }
+  setTimeout(() => {
+    if (
+      amount > 0 &&
+      currentAccount.movements.some(move => move >= amount * 0.1)
+    ) {
+      pushNewMove(currentAccount, Math.floor(amount));
+      unhideFunc(`Your Loan Request was accepted!`);
+      //update ui to show loan in deposits
+      updateUI();
+    } else {
+      unhideFunc('Your Loan Request was denied!');
+    }
+  }, 5000);
+  inputLoanAmount.blur();
   inputLoanAmount.value = '';
 }
 
