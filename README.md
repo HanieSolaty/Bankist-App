@@ -5,7 +5,7 @@ This is a bank application.
 <br />
 This App is avaiable at [this link](https://bucolic-taffy-b95a6f.netlify.app/).
 
-In this app we 2 users with:
+In this app we have 2 users with:
 <br />
 Username: js <br /> Password: 1111
 <br />
