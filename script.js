@@ -336,7 +336,7 @@ function logOut() {
   containerApp.style.opacity = 0;
   //reseting login form and removing logout btn
   btnLogout.style.display = 'none';
-  formLogin.style.display = 'block';
+  formLogin.style.display = 'flex';
   //go back to top
   window.scrollTo(0, 0);
 }
